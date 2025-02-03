@@ -1,91 +1,115 @@
-# sigmoidの計算は元コードより、一般的な形と少し違いました。-2/u0 って何でしょうかね?
 import math
 import random
 import matplotlib.pyplot as plt
+from typing import Literal
+
+# シグモイド関数
+
 
 def sigmoid(x, u0=0.4):
     return 1 / (1 + math.exp(-2 * x / u0))
 
+# シグモイド関数の微分
+
+
 def sigmoid_derivative(x):
     return sigmoid(x) * (1 - sigmoid(x))
+
 
 class Neuron:
     def __init__(
         self,
-        in_neurons: list["Neuron"],  # 入力ニューロンのリスト
-        ntype: str,                  # ニューロンのタイプ: "p"はポジティブ、"n"はネガティブ
-        alpha: float = 0.8,          # 学習率 (多分)
-        activation=sigmoid,          # 活性化関数
-        activation_derivative=sigmoid_derivative,  # 活性化関数の微分
+        input_neurons: list["Neuron"],
+        type: Literal["p", "n"],
+        alpha: float = 0.8,
+        activation=sigmoid,
+        activation_derivative=sigmoid_derivative,
     ) -> None:
-        self.ntype = ntype
-        self.alpha = alpha
+        self.type = type
         self.activation = activation
+        self.alpha = alpha
         self.activation_derivative = activation_derivative
-
-        # --- init weights
-        # 0～1の乱数で初期化                                                                                                                          
-        # 接続の種類で符号を変える: pp+ pn- np- nn+
+        # 重みの初期化
         self.weights = []
-        for n in in_neurons:
-            if ntype == "p":
-                if n.ntype == "p":
+
+        # 重みを正の値にするか負の値にするかを決定
+
+        # + と + の場合は1
+        # + と - の場合は-1
+        # - と + の場合は-1
+        # - と - の場合は1
+        for n in input_neurons:
+            if type == "p":
+                if n.type == "p":
                     ope = 1
                 else:
                     ope = -1
             else:
-                if n.ntype == "p":
+                if n.type == "p":
                     ope = -1
                 else:
                     ope = 1
             self.weights.append(random.random() * ope)
 
-        # --- operator
-        # 元のowに相当、ここの符号はよくわからなかったので元コードをそのまま再現
-        self.operator = 1 if ntype == "p" else -1
-        self.weights_operator = [n.operator for n in in_neurons]
+        # オペレーター
+        # 自分がpなら1、nなら-1
+        self.operator = 1 if type == "p" else -1
 
-        # --- update index
-        # 入力元が+ならupper時に学習
-        # 入力元が-ならlower時に学習
+        # 重みが1か-1かを保存
+        self.operator_weights = [n.operator for n in input_neurons]
+
+        # upper,lowerのリスト
         self.upper_idx_list = []
         self.lower_idx_list = []
-        for i, n in enumerate(in_neurons):
-            if n.ntype == "p":
+
+        # 入力ニューロンがpならupper_idx_listに、nならlower_idx_listに追加
+        for i, n in enumerate(input_neurons):
+            if n.type == "p":
                 self.upper_idx_list.append(i)
             else:
                 self.lower_idx_list.append(i)
 
-    def forward(self, x):
-        # 順方向の計算は既存と同じ
+    def forward(self,x):
+        # 入力の長さと重みの長さが同じか確認
         assert len(self.weights) == len(x)
+
+        # 重みと入力の内積
+        # 入力＊重み
         y = [x[i] * self.weights[i] for i in range(len(self.weights))]
         y = sum(y)
-        self.prev_in = x   # update用に一時保存
+        self.prev_in = x  # update用に一時保存
         self.prev_out = y  # update用に一時保存
         y = self.activation(y)
         return y
 
     def update_weight(self, delta_out, direct: str):
-        # 誤差拡散による学習、逆伝搬というと怒られそう（笑）
 
-        # f'(o)
-        # 元コードではsigmoidを通した後の値を保存して利用することで少し軽量化している
+        # 誤差拡散法
+
         grad = self.activation_derivative(abs(self.prev_out))
 
+        # directが"upper"の場合、upper_idx_listを使用
         if direct == "upper":
             indices = self.upper_idx_list
+        # directが"lower"の場合、lower_idx_listを使用
         else:
             indices = self.lower_idx_list
 
+        # 重みを更新
+
+        # 増やす用、減らす用のindeciesを回す
         for idx in indices:
-            delta = self.alpha * self.prev_in[idx]
-            delta *= grad
-            delta *= delta_out * self.operator * self.weights_operator[idx]
-            self.weights[idx] += delta
+            
+            # 重みの更新量を計算する
+            delta = self.alpha * self.prev_in[idx] # 学習率
+            delta *= grad # 勾配
+            delta *= delta_out * self.operator * self.operator_weights[idx] # 誤差拡散法
+            
+            self.weights[idx] += delta # 実際に重みを更新
 
     def __str__(self):
-        return f"Neuron(type={self.ntype}, weights={self.weights})"
+        return f"Neuron(type={self.type}, weights={self.weights})"
+        
 
 class ThreeLayerModel:
     def __init__(
@@ -97,64 +121,69 @@ class ThreeLayerModel:
     ) -> None:
         self.beta = beta
 
-        # 元コード上は [hd+, hd-] とprintされるもの
-        # 多分bias?
-        hd_p = Neuron([], "p")
-        hd_n = Neuron([], "n")
+        # バイアス？
+        hd_p = Neuron([],"p")
+        hd_n = Neuron([],"n")
 
-        # input
-        # 入力はpとnそれぞれを作成
+        # 入力層
+        # PとNそれぞれ作成
+        
         inputs: list[Neuron] = []
-        for i in range(input_num):
-            inputs.append(Neuron([], "p"))
-            inputs.append(Neuron([], "n"))
 
-        # hidden
-        # 入力は、[hd+, hd-, in1+, in1-, in2+, in2-, ...]
+        for n in range(input_num):
+            inputs.append(Neuron([],"p"))
+            inputs.append(Neuron([],"n"))
+
+
+        # 中間層
         self.hidden_neurons: list[Neuron] = []
+
         for i in range(hidden_num):
             self.hidden_neurons.append(
                 Neuron(
-                    [hd_p, hd_n] + inputs,
-                    ntype=("p" if i % 2 == 1 else "n"),  # 元コードに合わせて-から作成
-                    alpha=alpha,
+                    [hd_p, hd_n] + inputs, # バイアスとニューロンの入力を渡す
+                    type=("p" if i % 2 == 1 else "n"),  # 元コードに合わせて-から作成
                 )
             )
 
-        # output
-        # 入力は [hd+, hd-, h1-, h2+, h3-, ...]
-        self.out_neuron = Neuron([hd_p, hd_n] + self.hidden_neurons, "p", alpha=alpha)
+        # 出力層
+
+        # バイアスと中間層のニューロンを接続
+        self.out_neuron = Neuron([hd_p, hd_n] + self.hidden_neurons, "p")
 
     def forward(self, inputs):
-        # 入力用の配列を作成、入力をp用とn用に複製
+        # 入力用の配列、pとnを複製
+
+        # 入力層
         x = []
         for n in inputs:
-            x.append(n)  # p
-            x.append(n)  # n
+            x.append(n)
+            x.append(n)
 
-        # hidden layerのforward
-        # 入力に [hd+, hd-] も追加
+        # 中間層
+        # バイアスと入力を渡す
         x = [h.forward([self.beta, self.beta] + x) for h in self.hidden_neurons]
 
-        # out layer forward
-        # 入力に [hd+, hd-] も追加
+        # 出力層
+        # バイアスと中間層のニューロンを渡す
         x = self.out_neuron.forward([self.beta, self.beta] + x)
 
         return x
-
+    
     def train(self, inputs, target):
         x = self.forward(inputs)
 
-        # --- update(ED)
-        # 差分を取得し、更新方向を見る
+        # 誤差を計算
         diff = target - x
+
+        # 誤差が正ならupper、負ならlower
         if diff > 0:
             direct = "upper"
         else:
             direct = "lower"
             diff = -diff
-        
-        # 各ニューロンを更新
+
+        # 誤差拡散法
         for h in self.hidden_neurons:
             h.update_weight(diff, direct)
         self.out_neuron.update_weight(diff, direct)
