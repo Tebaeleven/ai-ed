@@ -37,17 +37,15 @@ class NeuronUnit:
     def __str__(self) -> str:
         return f"NeuronUnit(name={self.name}, hidden_weights={self.hidden_weights}, output_weights={self.output_weights})"
     
-    def train(self, input, target):
-        # 誤差を計算
-        error = target - input
+    def train(self, error):
+        """
+        引数 error を用いて各重みを調整する。
+        ここでは単純に誤差が正の場合は一部の重みを増やし、
+        負の場合は別の重みを減らす例としています。
+        """
+        print(f"[{self.name}] error: {error}")
+        max_weight = 1  # 重みの上限・下限を設定
 
-        print(f"error: {error}")
-
-        # 誤差を修正
-
-        max_weight = 1
-
-        # もし誤差が0より大きいなら増やす、0より小さいなら減らす
         if error > 0:
             # 重みを増やす
 
@@ -91,6 +89,8 @@ def main():
 
     # ニューロン1段目
     unit1 = NeuronUnit(name="unit1", x=x1)
+    unit2 = NeuronUnit(name="unit2", x=unit1.y)
+
     
     # エラーを保存するリスト
     errors = []
@@ -99,12 +99,30 @@ def main():
     outputs = []
 
     # トレーニングを10回繰り返す
-    for _ in range(10):
+
+    # unit1と2を使った場合
+    for i in range(10):
         unit1.forward()
-        error = unit1.calculate_error(1)  # ターゲットは1
+        # unit1 の出力を unit2 の入力に設定し、unit2 の順伝播
+        unit2.x = unit1.y
+        unit2.forward()
+
+        # unit2 のエラーを計算し、全体で使用
+        error = unit2.calculate_error(1)  # ターゲットは1
         errors.append(error)
-        outputs.append(unit1.y)  # 出力を保存
-        unit1.train(unit1.y, 1)
+        outputs.append(unit2.y)  # 出力を保存
+
+        # unit2 を誤差 error を引数にして学習
+        unit2.train(error)
+        unit1.train(error)
+
+    # # unit1のみを使った場合
+    # for i in range(10):
+    #     unit1.forward()
+    #     error = unit1.calculate_error(1)  # ターゲットは1
+    #     errors.append(error)
+    #     outputs.append(unit1.y)  # 出力を保存
+    #     unit1.train(error)
 
     # エラーと出力のグラフを同じウィンドウに描画
     plt.figure(figsize=(10, 5))
