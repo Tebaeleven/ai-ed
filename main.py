@@ -285,6 +285,69 @@ def main_and():
     print("--- output weights ---")
     print(model.out_neuron)
 
+def main_or():
+    model = ThreeLayerModel(2, hidden_num=1)
+
+    # --- train loop
+    dataset = [
+        [0, 0, 0.0],
+        [1, 0, 1.0],
+        [0, 1, 1.0],
+        [1, 1, 1.0],
+    ]
+    total_error = 0
+    display_interval = 1  # 誤差を表示する間隔
+    error_history = []  # エラー率の履歴を保存するリスト
+
+    iteration = 200
+
+    for i in range(iteration):
+        x1, x2, target = dataset[random.randint(0, len(dataset)) - 1]
+        metric = model.train([x1, x2], target)
+        total_error += metric
+
+        # --- predict
+        y = model.forward([x1, x2])
+        print(f"{i} in[{x1:5.2f},{x2:5.2f}] -> {y:5.2f}, target {target:5.2f}, metric {metric:5.2f}")
+
+        # 学習回数に応じて誤差を表示
+        if (i + 1) % display_interval == 0:
+            average_error = total_error / display_interval
+            print(f"Average error after {i + 1} iterations: {average_error:.5f}")
+            error_history.append(average_error)
+            total_error = 0  # 誤差をリセット
+
+    # エラー率の遷移をグラフで表示
+    plt.plot(range(display_interval, iteration + 1, display_interval), error_history, marker='o')
+    plt.title('Error Rate Transition')
+    plt.xlabel('Iteration')
+    plt.ylabel('Average Error')
+    plt.grid(True)
+    plt.show()
+
+    print("--- result ---")
+    for x1, x2, target in dataset:
+        y = model.forward([x1, x2])
+        print(f"[{x1:5.2f},{x2:5.2f}] -> {y:5.2f}, target {target:5.2f}")
+
+
+    # --- input weights
+    print("--- hd weights ---")
+    print(model.hd_p)
+    print(model.hd_n)
+
+    # --- input weights
+    print("--- input weights ---")
+    for n in model.inputs:
+        print(n)
+
+    print("--- hidden weights ---")
+    for n in model.hidden_neurons:
+        print(n)
+    
+    # --- last weights
+    print("--- output weights ---")
+    print(model.out_neuron)
 
 if __name__ == "__main__":
-    main_and()
+    main_or()
