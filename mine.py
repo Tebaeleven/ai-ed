@@ -87,7 +87,7 @@ class ThreeLayerModel:
                     [hd_p, hd_n] + self.inputs,
                     [],
                     type=("p" if i % 2 == 1 else "n"),
-                    name=f"hidden_{i}"
+                    name=f"hidden_{'p' if i % 2 == 1 else 'n'}"
                 )
             )
 
@@ -108,8 +108,7 @@ class ThreeLayerModel:
 
     def display_neuron_parameters(self):
         for neuron in self.inputs:
-            print("inputs")
-
+            print(f"Neuron Name: {neuron.name}")
             print(f"Neuron Type: {neuron.type}")
             print(f"Input Weights: {neuron.input_weights}")
             print(f"Output Weights: {neuron.output_weights}")
@@ -118,8 +117,7 @@ class ThreeLayerModel:
             print("-" * 30)
     
         for neuron in self.hidden_neurons:
-            print("hidden")
-
+            print(f"Neuron Name: {neuron.name}")
             print(f"Neuron Type: {neuron.type}")
             print(f"Input Weights: {neuron.input_weights}")
             print(f"Output Weights: {neuron.output_weights}")
@@ -131,7 +129,7 @@ class ThreeLayerModel:
 
 
         neuron = self.out_neuron
-        print("output")
+        print(f"Neuron Name: {neuron.name}")
         print(f"Neuron Type: {neuron.type}")
         print(f"Input Weights: {neuron.input_weights}")
         print(f"Output Weights: {neuron.output_weights}")
