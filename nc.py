@@ -33,7 +33,7 @@ class NeuronUnit:
 
         # 出力層の出力
         self.y = self.h1 * self.output_weights[0] + self.h2 * self.output_weights[1]
-        self.y = self.sigmoid(self.y)
+        # self.y = self.sigmoid(self.y)
         # print(f"y: {self.y}")
 
     def __str__(self) -> str:
@@ -89,105 +89,91 @@ class NeuronUnit:
         return 1 if x > 0 else 0
 
 def main():
-    # XORの入力データと出力データ
-    input_datas = np.array([
-        [0, 0],
-        [1, 0],
-        [0, 1],
-        [1, 1]
-    ])
+    # 入力
+    x1 = 1
+    x2 = 0
+    target = 0 # 0
+    target2 = 1 # 1
 
-    output_datas = np.array([
-        [1, 0],
-        [1, 0],
-        [1, 0],
-        [0, 1]
-    ])
+    # ニューロン1段目
+    unit1 = NeuronUnit(name="unit1", x=x1)
+    unit2 = NeuronUnit(name="unit2", x=0)
 
+    # ニューロン2段目
+    unit3 = NeuronUnit(name="unit3", x=0)
+    unit4 = NeuronUnit(name="unit4", x=0)
+
+    
     # エラーを保存するリスト
     errors = []
 
-    # 出力を保存するリスト
-    outputs = []
+    # unit1と2を使った場合
+    outputs_unit2 = []  # unit2の出力を保存するリスト
+    outputs_unit4 = []  # unit4の出力を保存するリスト
 
-    # トレーニングを1000回繰り返す
-    for epoch in range(100):
-        total_error = 0
-        epoch_outputs = []  # 各エポックの出力を保存するリスト
-        for input_data, output_data in zip(input_datas, output_datas):
-            x1, x2 = input_data
-            target1, target2 = output_data
-
-            # ニューロン1段目
-            unit1_top = NeuronUnit(name="unit1", x=x1)
-            unit2_top = NeuronUnit(name="unit2", x=unit1_top.y)
-
-            # ニューロン2段目
-            unit3_bottom = NeuronUnit(name="unit3", x=x2)
-            unit4_bottom = NeuronUnit(name="unit4", x=unit3_bottom.y)
-
-
-            # unit1の出力をunit2,unit4の入力にする
-            # unit1とunit2の順伝播
-            unit1_top.forward()
-
-            unit2_top.x = unit1_top.y
-            unit4_bottom.x = unit1_top.y
-
-            # unit3の出力をunit4,unit2の入力にする
-            unit3_bottom.forward()
-
-            unit4_bottom.x = unit3_bottom.y
-            unit2_top.x = unit3_bottom.y
-
-            unit2_top.forward()
-            unit4_bottom.forward()
-
-            # unit2のエラーを計算し、unit1とunit2を学習
-            error1 = unit2_top.calculate_error(target1)
-            unit2_top.train(error1)
-            unit1_top.train(error1)
-
-            # unit4のエラーを計算し、unit3とunit4を学習
-            error2 = unit4_bottom.calculate_error(target2)
-            unit4_bottom.train(error2)
-            unit3_bottom.train(error2)
-
-            # エラーを集計
-            total_error += abs(error1) + abs(error2)
-            epoch_outputs.append((unit2_top.y, unit4_bottom.y))  # 各エポックの出力を保存
-
-        errors.append(total_error)
-        outputs.append(epoch_outputs)
-
+    for i in range(200):
+        unit1.x = x1
+        unit3.x = x2
         
-        # 各エポックの結果を出力
-        print(f"Epoch {epoch + 1}: Total Error = {total_error}")
-        for i, (output1, output2) in enumerate(epoch_outputs):
-            print(f"  Input: {input_datas[i]}, Predicted Output: ({output1:.2f}, {output2:.2f}), Target: {output_datas[i]}")
+        # 一層目の計算
+        unit1.forward()
+        unit3.forward()
+
+        # 2層目の計算
+        # 2には1,3の出力を足したものを入れる
+        unit2.x= unit1.y + unit3.y
+        
+        # 4には1,3の出力を足したものを入れる
+        unit4.x = unit1.y + unit3.y
+
+        unit2.forward()
+        unit4.forward()
+
+        # 2のエラーを計算
+        error_unit2 = unit2.calculate_error(target)
+        errors.append(error_unit2)
+        outputs_unit2.append(unit2.y)  # unit2の出力を保存
+        unit2.train(error_unit2)
+        unit1.train(error_unit2)
+
+        # 4のエラーを計算
+        error_unit4 = unit4.calculate_error(target2)
+        errors.append(error_unit4)
+        outputs_unit4.append(unit4.y)  # unit4の出力を保存
+        unit4.train(error_unit4)
+        unit3.train(error_unit4)
+
 
     # エラーと出力のグラフを同じウィンドウに描画
-    plt.figure(figsize=(10, 5))
+    plt.figure(figsize=(15, 5))
 
     # エラーのグラフ
-    plt.subplot(1, 2, 1)
-    plt.plot(errors, label='Total Error over iterations')
+    plt.subplot(1, 3, 1)
+    plt.plot(errors, label='Error over iterations')
     plt.xlabel('Iteration')
-    plt.ylabel('Total Error')
-    plt.title('Total Error over Training Iterations')
+    plt.ylabel('Error')
+    plt.title('Error over Training Iterations')
     plt.legend()
 
-    # 出力のグラフ
-    plt.subplot(1, 2, 2)
-    plt.plot([output[0] for output in outputs[-1]], label='Output 1 over iterations')
-    plt.plot([output[1] for output in outputs[-1]], label='Output 2 over iterations')
+    # unit2の出力のグラフ
+    plt.subplot(1, 3, 2)
+    plt.plot(outputs_unit2, label='Unit2 Output over iterations')
     plt.xlabel('Iteration')
     plt.ylabel('Output')
-    plt.title('Output over Training Iterations')
+    plt.title('Unit2 Output over Training Iterations')
+    plt.legend()
+
+    # unit4の出力のグラフ
+    plt.subplot(1, 3, 3)
+    plt.plot(outputs_unit4, label='Unit4 Output over iterations')
+    plt.xlabel('Iteration')
+    plt.ylabel('Output')
+    plt.title('Unit4 Output over Training Iterations')
     plt.legend()
 
     plt.tight_layout()
     plt.show()
+    
     
     
     
