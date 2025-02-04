@@ -43,7 +43,8 @@ class NeuronUnit:
         print(f"error: {error}")
 
         # 誤差を修正
-        
+
+        max_weight = 5
 
         # もし誤差が0より大きいなら増やす、0より小さいなら減らす
         if error > 0:
@@ -51,19 +52,24 @@ class NeuronUnit:
 
             # 出力層の重み
             self.output_weights[1] += error/2
+            self.output_weights[1] = min(self.output_weights[1], max_weight)
 
             # 中間層の重み
             self.hidden_weights[2] += self.output_weights[0] / 2
+            self.hidden_weights[2] = min(self.hidden_weights[2], max_weight)
             self.hidden_weights[3] += self.output_weights[1] / 2
+            self.hidden_weights[3] = min(self.hidden_weights[3], max_weight)
         else:
             # 重みを減らす
 
             # 出力層の重み
             self.output_weights[0] -= error/2
-
+            self.output_weights[0] = max(self.output_weights[0], -max_weight)
             # 中間層の重み
             self.hidden_weights[0] -= self.output_weights[0] / 2
+            self.hidden_weights[0] = max(self.hidden_weights[0], -max_weight)
             self.hidden_weights[1] -= self.output_weights[1] / 2
+            self.hidden_weights[1] = max(self.hidden_weights[1], -max_weight)
           
 
     def relu(self, x):
@@ -83,7 +89,7 @@ def main():
     errors = []
 
     # トレーニングを10回繰り返す
-    for _ in range(20):
+    for _ in range(100):
         unit1.forward()
         error = unit1.calculate_error(1)  # ターゲットは1
         errors.append(error)
