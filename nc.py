@@ -36,7 +36,7 @@ class NeuronUnit:
 
         # 出力層の出力
         self.y = self.h1 * self.output_weights[0] + self.h2 * self.output_weights[1]
-        self.y = self.sigmoid(self.y)
+        # self.y = self.relu(self.y)
         # print(f"y: {self.y}")
 
     def __str__(self) -> str:
@@ -49,7 +49,7 @@ class NeuronUnit:
         負の場合は別の重みを減らす例としています。
         """
         print(f"[{self.name}] error: {error}")
-        max_weight = 10  # 重みの上限・下限を設定
+        max_weight = 2  # 重みの上限・下限を設定
 
         if error > 0:
             # 重みを増やす
@@ -190,8 +190,72 @@ def main():
     plt.show()
     
     
+
+def single_test():
+    # 入力
+    x1 = 1
+    target = 2
+
+    # ニューロン1段目
+    unit1 = NeuronUnit(name="unit1", x=0)
+    unit2 = NeuronUnit(name="unit2", x=0)
+    
+    # エラーを保存するリスト
+    errors = []
+
+    # 出力を保存するリスト
+    outputs = []
+
+    # トレーニングを10回繰り返す
+
+    # unit1と2を使った場合
+    for i in range(200):
+        unit1.x = x1
+        unit1.forward()
+
+        unit2.x = unit1.y
+        unit2.forward()
+
+        error = unit2.calculate_error(target)
+        errors.append(error)
+        outputs.append(unit2.y) 
+
+        unit2.train(error)
+        unit1.train(error)
+
+    print(f"結果 unit2.y: {unit2.y}")
+
+    # # unit1のみを使った場合
+    # for i in range(10):
+    #     unit1.forward()
+    #     error = unit1.calculate_error(1)  # ターゲットは1
+    #     errors.append(error)
+    #     outputs.append(unit1.y)  # 出力を保存
+    #     unit1.train(error)
+
+    # エラーと出力のグラフを同じウィンドウに描画
+    plt.figure(figsize=(10, 5))
+
+    # エラーのグラフ
+    plt.subplot(1, 2, 1)
+    plt.plot(errors, label='Error over iterations')
+    plt.xlabel('Iteration')
+    plt.ylabel('Error')
+    plt.title('Error over Training Iterations')
+    plt.legend()
+
+    # 出力のグラフ
+    plt.subplot(1, 2, 2)
+    plt.plot(outputs, label='Output over iterations')
+    plt.xlabel('Iteration')
+    plt.ylabel('Output')
+    plt.title('Output over Training Iterations')
+    plt.legend()
+
+    plt.tight_layout()
+    plt.show()
     
     
 
 if __name__ == "__main__":
-    main()
+    single_test()
