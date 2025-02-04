@@ -48,6 +48,8 @@ class Neuron:
         # output_weightsの初期化を後に移動
         self.output_weights = []
 
+    # 自分が次に出力している重みを格納
+    # 右側の重み
     def set_output_weights(self):
         # output_weightsをoutput_neuronsに基づいて初期化
         self.output_weights = [0.2 for _ in self.output_neurons]
@@ -122,8 +124,6 @@ class ThreeLayerModel:
             print(f"Input Weights: {neuron.input_weights}")
             print(f"Output Weights: {neuron.output_weights}")
             print(neuron.type)
-
-            neuron.get_sum_output_weights("upper")
 
             print("-" * 30)
 

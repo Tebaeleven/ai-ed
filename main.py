@@ -100,15 +100,15 @@ class ThreeLayerModel:
 
         # 元コード上は [hd+, hd-] とprintされるもの
         # 多分bias?
-        hd_p = Neuron([], "p")
-        hd_n = Neuron([], "n")
+        self.hd_p = Neuron([], "p")  # hd_pを属性として保存
+        self.hd_n = Neuron([], "n")  # hd_nを属性として保存
 
         # input
         # 入力はpとnそれぞれを作成
-        inputs: list[Neuron] = []
+        self.inputs: list[Neuron] = []  # inputsを属性として保存
         for i in range(input_num):
-            inputs.append(Neuron([], "p"))
-            inputs.append(Neuron([], "n"))
+            self.inputs.append(Neuron([], "p"))
+            self.inputs.append(Neuron([], "n"))
 
         # hidden
         # 入力は、[hd+, hd-, in1+, in1-, in2+, in2-, ...]
@@ -116,7 +116,7 @@ class ThreeLayerModel:
         for i in range(hidden_num):
             self.hidden_neurons.append(
                 Neuron(
-                    [hd_p, hd_n] + inputs,
+                    [self.hd_p, self.hd_n] + self.inputs,
                     ntype=("p" if i % 2 == 1 else "n"),  # 元コードに合わせて-から作成
                     alpha=alpha,
                 )
@@ -124,7 +124,7 @@ class ThreeLayerModel:
 
         # output
         # 入力は [hd+, hd-, h1-, h2+, h3-, ...]
-        self.out_neuron = Neuron([hd_p, hd_n] + self.hidden_neurons, "p", alpha=alpha)
+        self.out_neuron = Neuron([self.hd_p, self.hd_n] + self.hidden_neurons, "p", alpha=alpha)
 
     def forward(self, inputs):
         # 入力用の配列を作成、入力をp用とn用に複製
@@ -209,7 +209,9 @@ def main_xor():
         print(f"[{x1:5.2f},{x2:5.2f}] -> {y:5.2f}, target {target:5.2f}")
 
     # --- input weights
-    print("--- output weights ---")
+    print("--- hd weights ---")
+    print(model.hd_p)
+    print(model.hd_n)
 
     # --- last weights
     print("--- output weights ---")
@@ -264,16 +266,25 @@ def main_and():
         y = model.forward([x1, x2])
         print(f"[{x1:5.2f},{x2:5.2f}] -> {y:5.2f}, target {target:5.2f}")
 
-    # --- input weights
-    print("--- output weights ---")
 
-    # --- last weights
-    print("--- output weights ---")
-    print(model.out_neuron)
+    # --- input weights
+    print("--- hd weights ---")
+    print(model.hd_p)
+    print(model.hd_n)
+
+    # --- input weights
+    print("--- input weights ---")
+    for n in model.inputs:
+        print(n)
 
     print("--- hidden weights ---")
     for n in model.hidden_neurons:
         print(n)
+    
+    # --- last weights
+    print("--- output weights ---")
+    print(model.out_neuron)
+
 
 if __name__ == "__main__":
     main_and()
