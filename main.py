@@ -222,7 +222,7 @@ def main_xor():
         print(n)
 
 def main_and():
-    model = ThreeLayerModel(2, hidden_num=2)
+    model = ThreeLayerModel(2, hidden_num=1)
 
     # --- train loop
     dataset = [
