@@ -36,7 +36,7 @@ class NeuronUnit:
 
         # 出力層の出力
         self.y = self.h1 * self.output_weights[0] + self.h2 * self.output_weights[1]
-        # self.y = self.relu(self.y)
+        self.y = self.sigmoid(self.y)
         # print(f"y: {self.y}")
 
     def __str__(self) -> str:
@@ -49,7 +49,7 @@ class NeuronUnit:
         負の場合は別の重みを減らす例としています。
         """
         print(f"[{self.name}] error: {error}")
-        max_weight = 2  # 重みの上限・下限を設定
+        max_weight = 10  # 重みの上限・下限を設定
 
         if error > 0:
             # 重みを増やす
@@ -94,9 +94,9 @@ class NeuronUnit:
 def main():
     # 入力
     x1 = 1
-    x2 = 1
-    target = 1 # 0
-    target2 = 0 # 1
+    x2 = 0
+    target = 0 # 0
+    target2 = 1 # 1
 
     # ニューロン1段目
     unit1 = NeuronUnit(name="unit1", x=x1)
@@ -115,8 +115,8 @@ def main():
     outputs_unit4 = []  # unit4の出力を保存するリスト
 
     for i in range(500):
-        unit1.x = x1
-        unit3.x = x2
+        unit1.x = x1 + x2
+        unit3.x = x1 + x2
         
         # 一層目の計算
         unit1.forward()
@@ -258,4 +258,4 @@ def single_test():
     
 
 if __name__ == "__main__":
-    single_test()
+     main()
