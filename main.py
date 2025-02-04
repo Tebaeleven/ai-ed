@@ -38,8 +38,8 @@ class Neuron:
                     ope = -1
                 else:
                     ope = 1
-            self.weights.append(0.2 * ope)
-            # self.weights.append(random.random() * ope)
+            # self.weights.append(0.2 * ope)
+            self.weights.append(random.random() * ope)
 
         # --- operator
         # 元のowに相当、ここの符号はよくわからなかったので元コードをそのまま再現
@@ -164,7 +164,7 @@ class ThreeLayerModel:
     
 
 def main_xor():
-    model = ThreeLayerModel(2, hidden_num=2)
+    model = ThreeLayerModel(2, hidden_num=4)
 
     # --- train loop
     dataset = [
