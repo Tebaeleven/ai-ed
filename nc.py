@@ -44,7 +44,7 @@ class NeuronUnit:
         負の場合は別の重みを減らす例としています。
         """
         print(f"[{self.name}] error: {error}")
-        max_weight = 1  # 重みの上限・下限を設定
+        max_weight = 2  # 重みの上限・下限を設定
 
         if error > 0:
             # 重みを増やす
@@ -82,10 +82,14 @@ class NeuronUnit:
     
     def calculate_error(self, target):
         return target - self.y
+    
+    def step(self, x):
+        return 1 if x > 0 else 0
 
 def main():
     # 入力
-    x1 = 2.2
+    x1 = 1
+    target = 0
 
     # ニューロン1段目
     unit1 = NeuronUnit(name="unit1", x=x1)
@@ -101,14 +105,14 @@ def main():
     # トレーニングを10回繰り返す
 
     # unit1と2を使った場合
-    for i in range(10):
+    for i in range(200):
         unit1.forward()
         # unit1 の出力を unit2 の入力に設定し、unit2 の順伝播
         unit2.x = unit1.y
         unit2.forward()
 
         # unit2 のエラーを計算し、全体で使用
-        error = unit2.calculate_error(1)  # ターゲットは1
+        error = unit2.calculate_error(target)  # ターゲットは1
         errors.append(error)
         outputs.append(unit2.y)  # 出力を保存
 
