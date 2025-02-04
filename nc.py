@@ -7,8 +7,11 @@ class NeuronUnit:
         # プロパティ
         self.name = name 
         self.x = x
-        self.hidden_weights = [0.2,-0.5,-0.1,0.5]
-        self.output_weights = [0.8,-0.2]
+        # self.hidden_weights = [0.2,-0.5,-0.1,0.5]
+        # self.output_weights = [0.8,-0.2]
+
+        self.hidden_weights = np.random.randn(4)
+        self.output_weights = np.random.randn(2)
 
         # 中間層の出力
         self.h1 = 0
@@ -33,7 +36,7 @@ class NeuronUnit:
 
         # 出力層の出力
         self.y = self.h1 * self.output_weights[0] + self.h2 * self.output_weights[1]
-        # self.y = self.sigmoid(self.y)
+        self.y = self.sigmoid(self.y)
         # print(f"y: {self.y}")
 
     def __str__(self) -> str:
@@ -46,7 +49,7 @@ class NeuronUnit:
         負の場合は別の重みを減らす例としています。
         """
         print(f"[{self.name}] error: {error}")
-        max_weight = 1  # 重みの上限・下限を設定
+        max_weight = 10  # 重みの上限・下限を設定
 
         if error > 0:
             # 重みを増やす
@@ -91,9 +94,9 @@ class NeuronUnit:
 def main():
     # 入力
     x1 = 1
-    x2 = 0
-    target = 0 # 0
-    target2 = 1 # 1
+    x2 = 1
+    target = 1 # 0
+    target2 = 0 # 1
 
     # ニューロン1段目
     unit1 = NeuronUnit(name="unit1", x=x1)
@@ -111,7 +114,7 @@ def main():
     outputs_unit2 = []  # unit2の出力を保存するリスト
     outputs_unit4 = []  # unit4の出力を保存するリスト
 
-    for i in range(200):
+    for i in range(500):
         unit1.x = x1
         unit3.x = x2
         
@@ -143,6 +146,18 @@ def main():
         unit4.train(error_unit4)
         unit3.train(error_unit4)
 
+    unit1.x = 1
+    unit3.x = 0
+    unit1.forward()
+    unit3.forward()
+    
+    unit2.x = unit1.y + unit3.y
+    unit4.x = unit1.y + unit3.y
+
+    unit2.forward()
+    unit4.forward()
+
+    print(f"input ({unit1.x},{unit3.x}) -> output: {unit2.y}, {unit4.y}")
 
     # エラーと出力のグラフを同じウィンドウに描画
     plt.figure(figsize=(15, 5))
