@@ -17,14 +17,15 @@ def sigmoid_derivative(x):
 
 
 class Neuron:
-    def __init__(self, input_neurons: list["Neuron"], output_neurons: list["Neuron"], type: Literal["p", "n"]) -> None:
+    def __init__(self, input_neurons: list["Neuron"], output_neurons: list["Neuron"], type: Literal["p", "n"],name: str) -> None:
         self.type = type
+        self.name = name
         self.activation = sigmoid
         # 相手から繋がってきているニューロン
         self.input_neurons = input_neurons
 
         # 相手に繋げているニューロン
-        self.output_neurons = output_neurons
+        self.output_neurons: list["Neuron"] = output_neurons
 
         self.input_weights = []
 
@@ -57,23 +58,26 @@ class Neuron:
     def update_weight(self, delta_out, direct: str):
         pass
 
-    def get_sum_output_weights(self,type: Literal["upper", "lower"]):
-        if type == "upper":
-            return sum([self.input_weights[i] for i in self.output_neurons])
-        else:
-            return sum([self.input_weights[i] for i in self.input_neurons])
+    def get_sum_output_weights(self, type: Literal["upper", "lower"]):
+        # 全ての出力ニューロンの名前と重みを表示する（フィルタを外す例）
+        for neuron in self.output_neurons:
+            for weight in neuron.input_weights:
+                print(neuron.name,"先が持っている重み", weight)
+
+    def train(self, delta_out, direct: str):
+        pass
 
 
 class ThreeLayerModel:
     def __init__(self, input_num: int, hidden_num: int) -> None:
-        hd_p = Neuron([], [], "p")
-        hd_n = Neuron([], [], "n")
+        hd_p = Neuron([], [], "p","hd_p")
+        hd_n = Neuron([], [], "n","hd_n")
 
         # input
         self.inputs: list[Neuron] = []
         for i in range(input_num):
-            self.inputs.append(Neuron([], [], "p"))
-            self.inputs.append(Neuron([], [], "n"))
+            self.inputs.append(Neuron([], [], "p","input_p"))
+            self.inputs.append(Neuron([], [], "n","input_n"))
 
         # hidden
         self.hidden_neurons: list[Neuron] = []
@@ -83,11 +87,12 @@ class ThreeLayerModel:
                     [hd_p, hd_n] + self.inputs,
                     [],
                     type=("p" if i % 2 == 1 else "n"),
+                    name=f"hidden_{i}"
                 )
             )
 
         # output
-        self.out_neuron = Neuron([hd_p, hd_n] + self.hidden_neurons, [], "p")
+        self.out_neuron = Neuron([hd_p, hd_n] + self.hidden_neurons, [], "p","output")
 
         # それぞれのニューロンに接続先の設定をする
         for neuron in self.inputs:
@@ -120,6 +125,8 @@ class ThreeLayerModel:
             print(f"Output Weights: {neuron.output_weights}")
             print(neuron.type)
 
+            neuron.get_sum_output_weights("upper")
+
             print("-" * 30)
 
 
@@ -130,8 +137,45 @@ class ThreeLayerModel:
         print(f"Output Weights: {neuron.output_weights}")
         print("-" * 30)
 
+    def forward(self, inputs):
+        # 入力用の配列を作成、入力をp用とn用に複製
+        x = []
+        for n in inputs:
+            x.append(n)  # p
+            x.append(n)  # n
 
+        # hidden layerのforward
+        # 入力に [hd+, hd-] も追加
+        x = [h.forward([self.beta, self.beta] + x) for h in self.hidden_neurons]
 
+        # out layer forward
+        # 入力に [hd+, hd-] も追加
+        x = self.out_neuron.forward([self.beta, self.beta] + x)
+
+        return x
+    
+    def train(self, inputs, target):
+        
+        # まず結果を計算する
+        x = self.forward(inputs)
+
+        # 誤差を計算する
+        diff = target - x
+        
+        # 重みを下げるか上げるかモードを決める
+        if diff > 0:
+            direct = "upper"
+        else:
+            direct = "lower"
+            diff = -diff
+        
+        # 一つずつニューロンを更新していく
+
+        # 中間層（出力層は重みを持っていない）
+
+        # 入力層
+
+        
 def main():
     model = ThreeLayerModel(input_num=2, hidden_num=2)
     model.display_neuron_parameters()
