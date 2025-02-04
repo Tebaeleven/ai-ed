@@ -1,3 +1,5 @@
+import matplotlib.pyplot as plt
+
 class NeuronUnit:
     def __init__(self, name: str, x) -> None:
         # プロパティ
@@ -46,27 +48,54 @@ class NeuronUnit:
         # もし誤差が0より大きいなら増やす、0より小さいなら減らす
         if error > 0:
             # 重みを増やす
-            pass
+
+            # 出力層の重み
+            self.output_weights[1] += error/2
+
+            # 中間層の重み
+            self.hidden_weights[2] += self.output_weights[0] / 2
+            self.hidden_weights[3] += self.output_weights[1] / 2
         else:
             # 重みを減らす
-            pass
+
+            # 出力層の重み
+            self.output_weights[0] -= error/2
+
+            # 中間層の重み
+            self.hidden_weights[0] -= self.output_weights[0] / 2
+            self.hidden_weights[1] -= self.output_weights[1] / 2
           
 
     def relu(self, x):
       return max(0, x)
     
+    def calculate_error(self, target):
+        return target - self.y
+
 def main():
-    
     # 入力
     x1 = 1.5
-    x2 = 0
 
     # ニューロン1段目
     unit1 = NeuronUnit(name="unit1", x=x1)
-    unit1.forward()
-    print(unit1.y)
+    
+    # エラーを保存するリスト
+    errors = []
 
-    unit1.train(unit1.y, 1)
+    # トレーニングを10回繰り返す
+    for _ in range(20):
+        unit1.forward()
+        error = unit1.calculate_error(1)  # ターゲットは1
+        errors.append(error)
+        unit1.train(unit1.y, 1)
+
+    # グラフを描画
+    plt.plot(errors, label='Error over iterations')
+    plt.xlabel('Iteration')
+    plt.ylabel('Error')
+    plt.title('Error over Training Iterations')
+    plt.legend()
+    plt.show()
 
     # unit2 = NeuronUnit(name="unit2", x=unit1.y)
     # unit2.forward()
