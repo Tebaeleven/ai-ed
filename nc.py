@@ -33,6 +33,7 @@ class NeuronUnit:
 
         # 出力層の出力
         self.y = self.h1 * self.output_weights[0] + self.h2 * self.output_weights[1]
+        self.y = self.sigmoid(self.y)
         # print(f"y: {self.y}")
 
     def __str__(self) -> str:
