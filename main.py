@@ -2,6 +2,8 @@
 import math
 import random
 import matplotlib.pyplot as plt
+import numpy as np
+from mpl_toolkits.mplot3d import Axes3D  # 3Dプロット用
 
 def sigmoid(x, u0=0.4):
     return 1 / (1 + math.exp(-2 * x / u0))
@@ -93,8 +95,8 @@ class ThreeLayerModel:
         self,
         input_num: int,
         hidden_num: int,
-        alpha: float = 0.8,
-        beta: float = 0.8,
+        alpha: float = 0.8, # 学習率
+        beta: float = 0.8, # bias
     ) -> None:
         self.beta = beta
 
@@ -163,6 +165,44 @@ class ThreeLayerModel:
         return diff
     
 
+def plot_decision_boundary(model: ThreeLayerModel, dataset: list[list[float]]):
+    # 決定境界をプロットするための関数
+    x_min, x_max = -0.5, 1.5
+    y_min, y_max = -0.5, 1.5
+    h = 0.01  # ステップサイズ
+
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
+    Z = np.array([model.forward([x, y]) for x, y in zip(xx.ravel(), yy.ravel())])
+    Z = Z.reshape(xx.shape)
+
+    plt.contourf(xx, yy, Z, levels=[-0.1, 0.5, 1.1], colors=['#FFAAAA', '#AAAAFF'], alpha=0.8)
+    plt.scatter([x[0] for x in dataset], [x[1] for x in dataset], c=[x[2] for x in dataset], edgecolors='k', marker='o')
+    plt.title('Decision Boundary')
+    plt.xlabel('Input 1')
+    plt.ylabel('Input 2')
+    plt.grid(True)
+    plt.show()
+
+def plot_decision_boundary_3d(model: ThreeLayerModel, dataset: list[list[float]]):
+    # 3Dで決定境界をプロットするための関数
+    x_min, x_max = -0.5, 1.5
+    y_min, y_max = -0.5, 1.5
+    h = 0.1  # ステップサイズ
+
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
+    Z = np.array([model.forward([x, y]) for x, y in zip(xx.ravel(), yy.ravel())])
+    Z = Z.reshape(xx.shape)
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.plot_surface(xx, yy, Z, cmap='viridis', alpha=0.8)
+    ax.scatter([x[0] for x in dataset], [x[1] for x in dataset], [x[2] for x in dataset], c='r', marker='o')
+    ax.set_title('3D Decision Boundary')
+    ax.set_xlabel('Input 1')
+    ax.set_ylabel('Input 2')
+    ax.set_zlabel('Output')
+    plt.show()
+
 def main_xor():
     model = ThreeLayerModel(2, hidden_num=4)
 
@@ -221,6 +261,9 @@ def main_xor():
     for n in model.hidden_neurons:
         print(n)
 
+    # 3Dで決定境界をプロット
+    plot_decision_boundary_3d(model, dataset)
+
 def main_and():
     model = ThreeLayerModel(2, hidden_num=1)
 
@@ -266,6 +309,8 @@ def main_and():
         y = model.forward([x1, x2])
         print(f"[{x1:5.2f},{x2:5.2f}] -> {y:5.2f}, target {target:5.2f}")
 
+    # 決定境界をプロット
+    plot_decision_boundary(model, dataset)
 
     # --- input weights
     print("--- hd weights ---")
@@ -350,4 +395,4 @@ def main_or():
     print(model.out_neuron)
 
 if __name__ == "__main__":
-    main_or()
+    main_and()
