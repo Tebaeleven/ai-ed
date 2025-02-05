@@ -1,3 +1,7 @@
+# main.pyのコードの実験用
+# 重みの初期値を固定して実験しやすくした
+# XORはパラメーター数が違うため削除
+
 # sigmoidの計算は元コードより、一般的な形と少し違いました。-2/u0 って何でしょうかね?
 import math
 import random
@@ -16,6 +20,7 @@ class Neuron:
         self,
         in_neurons: list["Neuron"],  # 入力ニューロンのリスト
         ntype: str,                  # ニューロンのタイプ: "p"はポジティブ、"n"はネガティブ
+        round_weight,
         alpha: float = 0.8,          # 学習率 (多分)
         activation=sigmoid,          # 活性化関数
         activation_derivative=sigmoid_derivative,  # 活性化関数の微分
@@ -29,19 +34,21 @@ class Neuron:
         # 0～1の乱数で初期化                                                                                                                          
         # 接続の種類で符号を変える: pp+ pn- np- nn+
         self.weights = []
-        for n in in_neurons:
-            if ntype == "p":
-                if n.ntype == "p":
-                    ope = 1
+        if round_weight:
+            self.weights = round_weight
+        else:
+            for n in in_neurons:
+                if ntype == "p":
+                    if n.ntype == "p":
+                        ope = 1
+                    else:
+                        ope = -1
                 else:
-                    ope = -1
-            else:
-                if n.ntype == "p":
-                    ope = -1
-                else:
-                    ope = 1
-            # self.weights.append(0.2 * ope)
-            self.weights.append(random.random() * ope)
+                    if n.ntype == "p":
+                        ope = -1
+                    else:
+                        ope = 1
+                self.weights.append(round(random.random() * ope, 2))
 
         print("self.weights", self.weights)
         # --- operator
@@ -103,15 +110,15 @@ class ThreeLayerModel:
 
         # 元コード上は [hd+, hd-] とprintされるもの
         # 多分bias?
-        self.hd_p = Neuron([], "p")  # hd_pを属性として保存
-        self.hd_n = Neuron([], "n")  # hd_nを属性として保存
+        self.hd_p = Neuron([], "p", round_weight=[])
+        self.hd_n = Neuron([], "n", round_weight=[])
 
         # input
         # 入力はpとnそれぞれを作成
         self.inputs: list[Neuron] = []  # inputsを属性として保存
         for i in range(input_num):
-            self.inputs.append(Neuron([], "p"))
-            self.inputs.append(Neuron([], "n"))
+            self.inputs.append(Neuron([], "p", round_weight=[]))
+            self.inputs.append(Neuron([], "n", round_weight=[]))
 
         # hidden
         # 入力は、[hd+, hd-, in1+, in1-, in2+, in2-, ...]
@@ -122,12 +129,13 @@ class ThreeLayerModel:
                     [self.hd_p, self.hd_n] + self.inputs,
                     ntype=("p" if i % 2 == 1 else "n"),  # 元コードに合わせて-から作成
                     alpha=alpha,
+                    round_weight=[-0.25, 0.42, -0.2, 0.38, -0.25, 0.34],
                 )
             )
 
         # output
         # 入力は [hd+, hd-, h1-, h2+, h3-, ...]
-        self.out_neuron = Neuron([self.hd_p, self.hd_n] + self.hidden_neurons, "p", alpha=alpha)
+        self.out_neuron = Neuron([self.hd_p, self.hd_n] + self.hidden_neurons, "p", alpha=alpha, round_weight=[0.74, -0.37, -0.59])
 
     def forward(self, inputs):
         # 入力用の配列を作成、入力をp用とn用に複製
@@ -189,7 +197,6 @@ def plot_decision_boundary(model: ThreeLayerModel, dataset: list[list[float]]):
     plt.grid(True)
     plt.show()
 
-def plot_decision_boundary_3d(model: ThreeLayerModel, dataset: list[list[float]]):
     # 3Dで決定境界をプロットするための関数
     x_min, x_max = -0.5, 1.5
     y_min, y_max = -0.5, 1.5
@@ -208,67 +215,6 @@ def plot_decision_boundary_3d(model: ThreeLayerModel, dataset: list[list[float]]
     ax.set_ylabel('Input 2')
     ax.set_zlabel('Output')
     plt.show()
-
-def main_xor():
-    model = ThreeLayerModel(2, hidden_num=4)
-
-    # --- train loop
-    dataset = [
-        [0, 0, 1.0],
-        [1, 0, 0.0],
-        [0, 1, 0.0],
-        [1, 1, 1.0],
-    ]
-    total_error = 0
-    display_interval = 1  # 誤差を表示する間隔
-    error_history = []  # エラー率の履歴を保存するリスト
-
-    iteration = 200
-
-    for i in range(iteration):
-        x1, x2, target = dataset[random.randint(0, len(dataset)) - 1]
-        metric = model.train([x1, x2], target)
-        total_error += metric
-
-        # --- predict
-        y = model.forward([x1, x2])
-        print(f"{i} in[{x1:5.2f},{x2:5.2f}] -> {y:5.2f}, target {target:5.2f}, metric {metric:5.2f}")
-
-        # 学習回数に応じて誤差を表示
-        if (i + 1) % display_interval == 0:
-            average_error = total_error / display_interval
-            print(f"Average error after {i + 1} iterations: {average_error:.5f}")
-            error_history.append(average_error)
-            total_error = 0  # 誤差をリセット
-
-    # エラー率の遷移をグラフで表示
-    plt.plot(range(display_interval, iteration + 1, display_interval), error_history, marker='o')
-    plt.title('Error Rate Transition')
-    plt.xlabel('Iteration')
-    plt.ylabel('Average Error')
-    plt.grid(True)
-    plt.show()
-
-    print("--- result ---")
-    for x1, x2, target in dataset:
-        y = model.forward([x1, x2])
-        print(f"[{x1:5.2f},{x2:5.2f}] -> {y:5.2f}, target {target:5.2f}")
-
-    # --- input weights
-    print("--- hd weights ---")
-    print(model.hd_p)
-    print(model.hd_n)
-
-    # --- last weights
-    print("--- output weights ---")
-    print(model.out_neuron)
-
-    print("--- hidden weights ---")
-    for n in model.hidden_neurons:
-        print(n)
-
-    # 3Dで決定境界をプロット
-    plot_decision_boundary_3d(model, dataset)
 
 def main_and():
     model = ThreeLayerModel(2, hidden_num=1)
@@ -400,5 +346,66 @@ def main_or():
     print("--- output weights ---")
     print(model.out_neuron)
 
+def main_not():
+    model = ThreeLayerModel(2, hidden_num=1)
+
+    # --- train loop
+    dataset = [
+        [0, 0, 1.0],
+        [1, 1, 0.0],
+    ]
+    total_error = 0
+    display_interval = 1  # 誤差を表示する間隔
+    error_history = []  # エラー率の履歴を保存するリスト
+
+    iteration = 200
+
+    for i in range(iteration):
+        x1, x2, target = dataset[random.randint(0, len(dataset)) - 1]
+        metric = model.train([x1, x2], target)
+        total_error += metric
+
+        # --- predict
+        y = model.forward([x1, x2])
+        print(f"{i} in[{x1:5.2f},{x2:5.2f}] -> {y:5.2f}, target {target:5.2f}, metric {metric:5.2f}")
+
+        # 学習回数に応じて誤差を表示
+        if (i + 1) % display_interval == 0:
+            average_error = total_error / display_interval
+            print(f"Average error after {i + 1} iterations: {average_error:.5f}")
+            error_history.append(average_error)
+            total_error = 0  # 誤差をリセット
+
+    # エラー率の遷移をグラフで表示
+    plt.plot(range(display_interval, iteration + 1, display_interval), error_history, marker='o')
+    plt.title('Error Rate Transition')
+    plt.xlabel('Iteration')
+    plt.ylabel('Average Error')
+    plt.grid(True)
+    plt.show()
+
+    print("--- result ---")
+    for x1, x2, target in dataset:
+        y = model.forward([x1, x2])
+        print(f"[{x1:5.2f},{x2:5.2f}] -> {y:5.2f}, target {target:5.2f}")
+
+    # --- input weights
+    print("--- hd weights ---")
+    print(model.hd_p)
+    print(model.hd_n)
+
+    # --- input weights
+    print("--- input weights ---")
+    for n in model.inputs:
+        print(n)
+
+    print("--- hidden weights ---")
+    for n in model.hidden_neurons:
+        print(n)
+    
+    # --- last weights
+    print("--- output weights ---")
+    print(model.out_neuron)
+
 if __name__ == "__main__":
-    main_and()
+    main_not()
