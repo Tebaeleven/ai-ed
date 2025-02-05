@@ -230,24 +230,45 @@ def main_and():
     display_interval = 1  # 誤差を表示する間隔
     error_history = []  # エラー率の履歴を保存するリスト
 
+    # iteration = 200
+
+    # for i in range(iteration):
+    #     x1, x2, target = dataset[random.randint(0, len(dataset)) - 1]
+    #     metric = model.train([x1, x2], target)
+    #     total_error += metric
+
+    #     # --- predict
+    #     y = model.forward([x1, x2])
+    #     print(f"{i} in[{x1:5.2f},{x2:5.2f}] -> {y:5.2f}, target {target:5.2f}, metric {metric:5.2f}")
+
+    #     # 学習回数に応じて誤差を表示
+    #     if (i + 1) % display_interval == 0:
+    #         average_error = total_error / display_interval
+    #         print(f"Average error after {i + 1} iterations: {average_error:.5f}")
+    #         error_history.append(average_error)
+    #         total_error = 0  # 誤差をリセット
+
+
     iteration = 200
+    # ランダム選択を削除し、順番にループする
 
     for i in range(iteration):
-        x1, x2, target = dataset[random.randint(0, len(dataset)) - 1]
-        metric = model.train([x1, x2], target)
-        total_error += metric
+        for x1, x2, target in dataset:
+            metric = model.train([x1, x2], target)
+            total_error += metric
 
-        # --- predict
-        y = model.forward([x1, x2])
-        print(f"{i} in[{x1:5.2f},{x2:5.2f}] -> {y:5.2f}, target {target:5.2f}, metric {metric:5.2f}")
+            # --- predict
+            y = model.forward([x1, x2])
+            print(f"{i} in[{x1:5.2f},{x2:5.2f}] -> {y:5.2f}, target {target:5.2f}, metric {metric:5.2f}")
 
         # 学習回数に応じて誤差を表示
         if (i + 1) % display_interval == 0:
-            average_error = total_error / display_interval
+            average_error = total_error / (display_interval * len(dataset))  # データセットのサイズで割る
             print(f"Average error after {i + 1} iterations: {average_error:.5f}")
             error_history.append(average_error)
             total_error = 0  # 誤差をリセット
 
+    
     # エラー率の遷移をグラフで表示
     plt.plot(range(display_interval, iteration + 1, display_interval), error_history, marker='o')
     plt.title('Error Rate Transition')
@@ -408,4 +429,4 @@ def main_not():
     print(model.out_neuron)
 
 if __name__ == "__main__":
-    main_not()
+    main_and()
