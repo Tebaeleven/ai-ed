@@ -158,8 +158,13 @@ class ThreeLayerModel:
             diff = -diff
         
         # 各ニューロンを更新
+        # 中間層から更新しても良いし、出力層から更新しても良い
+
+        # 中間層
         for h in self.hidden_neurons:
             h.update_weight(diff, direct)
+
+        # 出力層
         self.out_neuron.update_weight(diff, direct)
 
         return diff
