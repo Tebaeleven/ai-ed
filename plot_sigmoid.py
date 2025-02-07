@@ -32,14 +32,17 @@ def plot_sigmoid():
     # 指定点を赤い点でプロット
     plt.scatter(points, y_points, color="red", zorder=5, label="指定点")
 
-    # 各指定点における接線を描画
+    # 各指定点における接線と勾配の値を描画
     for x0, y0, m in zip(points, y_points, slopes):
         # 接線を描くため、点の周辺 (x0±0.5) のx値を用意
         x_tangent = np.linspace(x0 - 0.5, x0 + 0.5, 100)
         y_tangent = y0 + m * (x_tangent - x0)
-        plt.plot(x_tangent, y_tangent, linestyle="--", label=f"接線 (x={x0:.3f}, m={m:.3f})")
-        # 接線の傾きの値をテキストで表示
-        plt.text(x0, y0, f" m={m:.3f}", fontsize=10, color="green")
+        plt.plot(x_tangent, y_tangent, linestyle="--", label=f"接線 (x={x0:.3f})")
+        
+        # 接線の傾きの値を点のすぐ近くに注釈として表示（オフセットして配置）
+        plt.annotate(f"m={m:.3f}", xy=(x0, y0), xytext=(x0 + 0.1, y0 + 0.1),
+                     fontsize=10, color="green",
+                     arrowprops=dict(arrowstyle="->", color="green"))
 
     plt.legend()
     plt.grid(True)
