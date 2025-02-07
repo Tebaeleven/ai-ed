@@ -12,8 +12,14 @@ from mpl_toolkits.mplot3d import Axes3D  # 3Dプロット用
 def sigmoid(x, u0=0.4):
     return 1 / (1 + math.exp(-2 * x / u0))
 
+print("出力", sigmoid(0.406))
+print("出力", sigmoid(-0.225507535979293))
+
 def sigmoid_derivative(x):
     return sigmoid(x) * (1 - sigmoid(x))
+
+print("sigmoid微分した値", sigmoid_derivative(0.406))
+print("sigmoid微分した値", sigmoid_derivative(-0.225507535979293))
 
 class Neuron:
     def __init__(
@@ -59,8 +65,8 @@ class Neuron:
         # --- update index
         # 入力元が+ならupper時に学習
         # 入力元が-ならlower時に学習
-        self.upper_idx_list = []
-        self.lower_idx_list = []
+        self.upper_idx_list = [] # 入力が+の場合のインデックス
+        self.lower_idx_list = [] # 入力が-の場合のインデックス
         for i, n in enumerate(in_neurons):
             if n.ntype == "p":
                 self.upper_idx_list.append(i)
@@ -74,6 +80,7 @@ class Neuron:
         y = sum(y)
         self.prev_in = x   # update用に一時保存
         self.prev_out = y  # update用に一時保存
+        print("sigmoidなし", y)
         y = self.activation(y)
         return y
 
@@ -82,15 +89,21 @@ class Neuron:
 
         # f'(o)
         # 元コードではsigmoidを通した後の値を保存して利用することで少し軽量化している
-        grad = self.activation_derivative(abs(self.prev_out))
+        # 絶対値をとらなくても動くのでabs関数を外した
+        grad = self.activation_derivative(self.prev_out)
 
         if direct == "upper":
             indices = self.upper_idx_list
         else:
             indices = self.lower_idx_list
 
+        print("向き", direct)
         for idx in indices:
-            delta = self.alpha * self.prev_in[idx]
+            # prev_inには前回の入力値が入っている
+            # idxには1,3のようなupperかlowerのインデックスが入っている
+            print("prev_in", self.prev_in)
+            print("prev_out", self.prev_out)
+            delta = self.alpha * self.prev_in[idx] 
             delta *= grad
             delta *= delta_out * self.operator * self.weights_operator[idx]
             self.weights[idx] += delta
@@ -147,11 +160,11 @@ class ThreeLayerModel:
         # hidden layerのforward
         # 入力に [hd+, hd-] も追加
         x = [h.forward([self.beta, self.beta] + x) for h in self.hidden_neurons]
-
+        print("中間層のforward", x)
         # out layer forward
         # 入力に [hd+, hd-] も追加
         x = self.out_neuron.forward([self.beta, self.beta] + x)
-
+        print("出力層のforward", x)
         return x
 
     def train(self, inputs, target):
@@ -165,7 +178,7 @@ class ThreeLayerModel:
         else:
             direct = "lower"
             diff = -diff
-        
+        print("diff", diff)
         # 各ニューロンを更新
         # 中間層から更新しても良いし、出力層から更新しても良い
 
@@ -221,10 +234,10 @@ def main_and():
 
     # --- train loop
     dataset = [
+        [1, 1, 1.0],
         [0, 0, 0.0],
         [1, 0, 0.0],
         [0, 1, 0.0],
-        [1, 1, 1.0],
     ]
     total_error = 0
     display_interval = 1  # 誤差を表示する間隔
@@ -249,7 +262,7 @@ def main_and():
     #         total_error = 0  # 誤差をリセット
 
 
-    iteration = 200
+    iteration = 1
     # ランダム選択を削除し、順番にループする
 
     for i in range(iteration):
