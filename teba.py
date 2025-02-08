@@ -9,6 +9,7 @@ def sigmoid(x, u0=0.4):
 def main():
 
   # パラメーターの初期化
+  alpha = 0.5
   bias = 0.8
   hidden_weights = [-0.25, 0.42, -0.2, 0.38, -0.25, 0.34]
   output_weights = [0.74, -0.37, -0.59]
@@ -53,7 +54,7 @@ def main():
   ]
 
   # トレーニングの設定（エポック数など）
-  epochs = 10  # エポック数を適宜変更してください
+  epochs = 100  # エポック数を適宜変更してください
   error_list = []
 
   for i in range(epochs):
@@ -89,29 +90,19 @@ def main():
 
         if direct == "upper":
             for j in hidden_upper_idx_list:
-                hidden_weights[j] -= hidden_weights[j] * error 
+                hidden_weights[j] += error * hidden_weights[j] * alpha
         else:
             for j in hidden_lower_idx_list:
-                hidden_weights[j] -= hidden_weights[j] * error 
+                hidden_weights[j] -= error * hidden_weights[j] * alpha
 
-        for j in output_upper_idx_list:
-            output_weights[j] -= output_weights[j] * error 
-        for j in output_lower_idx_list:
-            output_weights[j] += output_weights[j] * error 
+        if direct == "upper":
+            for j in output_upper_idx_list:
+                output_weights[j] += error * output_weights[j] * alpha
+        else:
+            for j in output_lower_idx_list:
+                output_weights[j] -= error * output_weights[j] * alpha
 
-
-        # if direct == "upper":
-        #     indices = output_upper_idx_list
-        # else:
-        #     indices = output_lower_idx_list
-
-        # for j in indices:
-        #     if output_weights[j] > error:
-        #       output_weights[j] = output_weights[j] * error
-        #     else:
-        #       output_weights[j] = output_weights[j] * error
-        
-      print(f"重み: {hidden_weights}")
+        print(f"重み: {hidden_weights}")
         
 
       # for j in hidden_lower_idx_list:
