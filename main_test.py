@@ -10,6 +10,7 @@ import numpy as np
 from mpl_toolkits.mplot3d import Axes3D  # 3Dプロット用
 
 def sigmoid(x, u0=0.4):
+    # シグモイド関数の定義： s(x) = 1 / (1 + exp(-2*x/u0))
     return 1 / (1 + math.exp(-2 * x / u0))
 
 print("出力", sigmoid(0.406))
@@ -90,7 +91,7 @@ class Neuron:
         # f'(o)
         # 元コードではsigmoidを通した後の値を保存して利用することで少し軽量化している
         # 絶対値をとらなくても動くのでabs関数を外した
-        grad = self.activation_derivative(self.prev_out)
+        grad = self.activation_derivative(abs(self.prev_out))
 
         if direct == "upper":
             indices = self.upper_idx_list
@@ -106,6 +107,8 @@ class Neuron:
             delta = self.alpha * self.prev_in[idx] 
             delta *= grad
             delta *= delta_out * self.operator * self.weights_operator[idx]
+            print("delta_out", delta_out)
+            print("更新量だよ", delta , self.weights_operator[idx], self.operator,idx)
             self.weights[idx] += delta
 
     def __str__(self):
@@ -186,8 +189,11 @@ class ThreeLayerModel:
         for h in self.hidden_neurons:
             h.update_weight(diff, direct)
 
+        print("中間層の更新終わり")
+
         # 出力層
         self.out_neuron.update_weight(diff, direct)
+        print("出力層の更新終わり")
 
         return diff
     
@@ -243,7 +249,7 @@ def main_and():
     display_interval = 1  # 誤差を表示する間隔
     error_history = []  # エラー率の履歴を保存するリスト
 
-    # iteration = 200
+    # iteration = 100
 
     # for i in range(iteration):
     #     x1, x2, target = dataset[random.randint(0, len(dataset)) - 1]
